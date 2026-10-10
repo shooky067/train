@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>오늘도 영업 중! 역내 매점</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2e6bff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="역내 매점">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{--ink:#1b2333;--card:#fff;--ln:#c4d2f0;--blue:#2e6bff;--gold:#ffb400;--ok:#1f9e63;--bad:#d93a40;--mut:#5b667d;--bg1:#dfeaff;--bg2:#f4f8ff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#e8edf8;--card:#1c2538;--ln:#37466a;--mut:#9aa7c4;--bg1:#101a30;--bg2:#17233f}}
+:root[data-theme="dark"]{--ink:#e8edf8;--card:#1c2538;--ln:#37466a;--mut:#9aa7c4;--bg1:#101a30;--bg2:#17233f}
+*{box-sizing:border-box}html,body{margin:0}
+body{font:16px/1.5 system-ui,"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:var(--ink);background:linear-gradient(var(--bg1),var(--bg2));min-height:100vh}
+body.big{font-size:19px}body[data-ph="0"]{background:linear-gradient(#ffe7b8,var(--bg2))}body[data-ph="2"]{background:linear-gradient(#ffc9a8,var(--bg2))}body[data-ph="3"]{background:linear-gradient(#27346b,var(--bg1))}
+.wrap{max-width:1000px;margin:0 auto;padding:12px}
+.top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--card);border:2px solid var(--ln);border-radius:14px;padding:8px 12px;margin-bottom:12px;font-weight:600}
+.top .sp{flex:1}
+button{font:inherit;min-height:44px;min-width:44px;padding:6px 14px;border-radius:12px;border:2px solid var(--blue);background:var(--card);color:var(--ink);cursor:pointer}
+button.pri{background:var(--blue);color:#fff}button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.card{background:var(--card);border:2px solid var(--ln);border-radius:14px;padding:12px;margin-bottom:12px}
+h1{font-size:1.9rem;margin:.2em 0}h2{font-size:1.25rem;margin:.2em 0 .6em}
+.grid{display:grid;gap:12px}@media(min-width:900px){.grid.two{grid-template-columns:1fr 1fr}}
+.row{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--ln)}.row .n{flex:1}
+.mut{color:var(--mut);font-size:.9rem}.bad{color:var(--bad)}.ok{color:var(--ok)}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.slot{display:flex;flex-direction:column;align-items:center;padding:8px 4px;font-size:.9rem}
+.slot .e{font-size:1.8rem}.slot.sel{background:var(--gold);color:#1b2333}
+.q{display:flex;gap:8px;flex-wrap:wrap}.cust{flex:1;min-width:120px;text-align:left;padding:6px 8px}.cust.on{background:var(--blue);color:#fff}
+.g{height:8px;border-radius:4px;background:var(--ln);overflow:hidden;margin-top:4px}.g i{display:block;height:100%;width:100%;background:var(--ok)}
+.chip{display:inline-flex;gap:4px;align-items:center;margin:2px}.chip.in{background:var(--ok);color:#fff;border-color:var(--ok)}
+.bar{height:10px;background:var(--ln);border-radius:5px;overflow:hidden}.bar i{display:block;height:100%;background:var(--blue)}
+#toast{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#1b2333;color:#fff;padding:8px 16px;border-radius:20px;max-width:92%;text-align:center;z-index:9}
+#toast:empty{display:none}.banner{background:var(--gold);color:#1b2333;font-weight:700;border-radius:10px;padding:6px 10px;margin-bottom:8px}
+textarea{width:100%;min-height:90px;font:12px monospace}
+.rm *{transition:none!important;animation:none!important}
+</style></head><body><div class="wrap" id="app"></div><div id="toast" aria-live="polite"></div>
+<script>
+const $=s=>document.querySelector(s),K='subwayKiosk.save.v1',TH=[0,40,100,180,280],SB=[3,6,3.5,4.5],PHN=['출근 러시','한가한 낮','퇴근 시간','막차 시간'];
+const fmt=n=>n.toLocaleString('ko-KR')+'원',rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const P=[{id:'water',n:'생수',e:'💧',pr:1000,c:500,mx:6,st:1,d:[3,2,3,2]},{id:'coffee',n:'캔커피',e:'☕',pr:1500,c:800,mx:6,st:1,d:[5,2,3,1]},{id:'choco',n:'초코바',e:'🍫',pr:1200,c:600,mx:6,st:1,d:[3,3,3,2]},{id:'gimbap',n:'삼각김밥',e:'🍙',pr:1800,c:1000,mx:6,st:1,d:[4,2,3,4]},{id:'gum',n:'껌',e:'🍬',pr:1000,c:400,mx:8,st:2,d:[3,3,2,1]},{id:'ramen',n:'컵라면',e:'🍜',pr:2500,c:1400,mx:4,st:2,d:[1,2,2,5]},{id:'umb',n:'우산',e:'☂️',pr:5000,c:3000,mx:4,st:3,d:[0,1,2,2]},{id:'chg',n:'충전 케이블',e:'🔌',pr:8000,c:5000,mx:3,st:4,d:[1,1,3,4]}];
+const PM=Object.fromEntries(P.map(p=>[p.id,p]));
+const C=[{n:'급한 직장인',e:'😤',w:[5,0,2,0],k:[1,2],pt:8,sp:{},tip:0},{n:'졸린 학생',e:'🎒',w:[2,2,4,0],k:[1,2],pt:12,sp:{rec:.2},tip:.05},{n:'길 잃은 관광객',e:'🧳',w:[0,5,1,0],k:[1,1],pt:15,sp:{way:.6},tip:.1},{n:'단골 할머니',e:'👵',w:[0,5,1,0],k:[1,2],pt:20,sp:{bag:.5},tip:.05},{n:'지친 직장인',e:'🥱',w:[0,0,5,3],k:[1,3],pt:10,sp:{bag:.2},tip:.05},{n:'회식 후 귀가',e:'🍻',w:[0,0,0,5],k:[1,3],pt:10,sp:{},tip:.1},{n:'수상한 손님',e:'🕵️',w:[0,1,0,3],k:[1,2],pt:14,sp:{},tip:.1}];
+const ST=[[0,'면접 가는 길인데 넥타이를 깜빡했어요. 일단 캔커피!',['coffee']],[0,'오늘 첫 출근이에요! 떨려서 물부터요.',['water']],[0,'지각 직전! 삼각김밥은 뛰면서 먹을게요.',['gimbap']],[1,'손주가 좋아하는 초코바요. 비밀이에요.',['choco']],[1,'친구 생일 선물인데 이걸로 될까요?',['choco','water']],[1,'비둘기가 제 간식을 채 갔어요…',['gimbap']],[2,'상사한테 칭찬받았어요! 축하용 삼각김밥이요!',['gimbap','coffee']],[2,'퇴근길 소소한 보상입니다.',['choco','coffee']],[2,'다이어트는 내일부터 할래요.',['choco']],[3,'막차 놓친 줄 알았는데 5분 남았대요!',['water','gimbap']],[3,'야근 끝! 이 커피는 저한테 주는 상이에요.',['coffee']],[3,'역장님께는 비밀로 해주세요.',['choco','gimbap']]];
+const UP=[{id:'slots',n:'🧱 매대 칸 확장',ef:'칸 +1',max:3,pr:[8000,15000,25000],s:[1,2,3]},{id:'store',n:'📦 재고 공간',ef:'창고 +20',max:3,pr:[6000,12000,20000],s:[1,2,3]},{id:'depth',n:'📏 선반 깊이',ef:'칸 수량 +2',max:2,pr:[10000,22000],s:[2,4]},{id:'scan',n:'🧾 빠른 계산대',ef:'인내심 감소 −10%',max:2,pr:[12000,25000],s:[2,4]},{id:'sign',n:'🪧 눈에 띄는 간판',ef:'손님 도착 −5%',max:2,pr:[18000,30000],s:[3,5]}];
+let S,G,view='title',mem=false,ord={},selP=null,note='',bad=false;
+const lv=k=>S.up[k]||0,slots=()=>4+lv('slots'),cap=()=>40+20*lv('store'),depth=p=>p.mx+2*lv('depth'),unl=()=>P.filter(p=>p.st<=S.star);
+const whUse=()=>Object.values(S.wh).reduce((a,b)=>a+b,0),cost=p=>S.fx&&S.fx.sale?Math.ceil(p.c*.7/100)*100:p.c;
+function mk(){return{v:1,day:1,money:30000,rp:0,star:1,wh:{water:6,coffee:6,choco:6,gimbap:6},shelf:[null,null,null,null],up:{},stage:'order',fx:{},hist:[],set:{big:0,rm:0}}}
+function clean(o){try{if(!o||o.v!==1)return null;const n=(x,d,hi)=>Number.isFinite(x)?Math.min(Math.max(Math.floor(x),0),hi):d,s=mk();s.day=Math.max(1,n(o.day,1,99999));s.money=n(o.money,0,9999999);s.rp=n(o.rp,0,99999);s.star=Math.min(5,Math.max(1,n(o.star,1,5)));s.wh={};for(const p of P)if(o.wh&&o.wh[p.id])s.wh[p.id]=n(o.wh[p.id],0,999);s.up={};for(const u of UP)s.up[u.id]=Math.min(u.max,n(o.up&&o.up[u.id],0,9));const sl=4+s.up.slots;s.shelf=Array.from({length:sl},(_,i)=>{const e=o.shelf&&o.shelf[i];return e&&PM[e.id]?{id:e.id,n:n(e.n,0,99)}:null});s.stage=o.stage==='display'?'display':o.stage==='result'?'result':'order';s.fx=o.fx&&typeof o.fx==='object'?{rain:!!o.fx.rain,sale:!!o.fx.sale}:{};s.hist=Array.isArray(o.hist)?o.hist.slice(-14):[];s.set={big:o.set&&o.set.big?1:0,rm:o.set&&o.set.rm?1:0};s.stories=Array.isArray(o.stories)?o.stories.slice(-6).map(String):[];return s}catch(e){return null}}
+function save(){try{const o=localStorage.getItem(K);if(o)localStorage.setItem(K+'.bak',o);localStorage.setItem(K,JSON.stringify(S))}catch(e){mem=true}}
+function load(){try{for(const k of[K,K+'.bak']){const t=localStorage.getItem(k);if(t){const s=clean(JSON.parse(t));if(s)return s}}if(localStorage.getItem(K))bad=true}catch(e){mem=true}return null}
+function toast(t){const e=$('#toast');e.textContent=t;clearTimeout(toast.t);toast.t=setTimeout(()=>e.textContent='',2200)}
+function applyset(){document.body.classList.toggle('big',!!(S&&S.set.big));document.body.classList.toggle('rm',!!(S&&S.set.rm)||matchMedia('(prefers-reduced-motion:reduce)').matches)}
+function hdr(){return`<div class="top"><span>📅 ${S.day}일차</span><span>💰 ${fmt(S.money)}</span><span>${'⭐'.repeat(S.star)}</span><span class="mut">평판 ${S.rp}</span><span class="sp"></span><button onclick="go('set')" aria-label="설정">☰</button></div>${mem?'<div class="banner">이 브라우저에서는 저장되지 않아요. 설정에서 내보내기를 이용하세요.</div>':''}`}
+function go(v){if(view==='svc'&&v!=='svc'&&G){clearInterval(G.iv);G=null;S.stage='display';toast('영업 도중 나가서 오늘 영업을 다시 준비해요')}view=v;R()}
+function R(){applyset();document.body.dataset.ph=view==='svc'&&G?G.ph:'';const a=$('#app');
+if(view==='title'){const has=!!S;a.innerHTML=`<div class="card"><h1>🚇 오늘도 영업 중!<br>역내 매점</h1><p>상품을 발주하고, 진열하고, 손님을 응대해 작은 매점을 키워 보세요.</p>${bad?'<p class="bad">저장 데이터가 손상되어 불러오지 못했어요. 새로 시작할 수 있어요.</p>':''}<p><button class="pri" onclick="newGame()">새로 시작</button> <button ${has?'':'disabled'} onclick="cont()">이어하기</button> <button onclick="go('how')">게임 방법</button> <button onclick="go('set')">설정</button></p></div>`}
+else if(view==='how')a.innerHTML=`<div class="card"><h2>게임 방법</h2><p>① 발주 → ② 진열 → ③ 영업(6분) → ④ 손님 응대 → ⑤ 정산.<br>손님 말풍선의 상품을 눌러 바구니에 담고, 봉투·영수증·길 안내 요청까지 끝내면 <b>계산</b>! 인내심 바가 절반 넘게 남았을 때 응대하면 팁과 평판을 더 받아요. 놓쳐도 게임은 계속돼요.<br>단축키: 1~4 손님 선택, Enter 계산, Space 일시정지.</p><button class="pri" onclick="go(S?'${S?S.stage==='result'?'result':S.stage:'title'}':'title')">돌아가기</button></div>`.replace("go(S?'title'","go(S?'title'");
+else if(!S){view='title';return R()}
+else if(view==='order')ordV(a);else if(view==='display')disV(a);else if(view==='svc')svcV(a);else if(view==='result')resV(a);else if(view==='up')upV(a);else if(view==='set')setV(a)}
+function cont(){view=S.stage;R()}
+function newGame(){if(S&&!confirm('기존 진행이 사라져요. 새로 시작할까요?'))return;S=mk();bad=false;save();view='order';ord={};R()}
+// 발주
+function ordV(a){const left=cap()-whUse(),tot=Object.entries(ord).reduce((s,[k,v])=>s+v*cost(PM[k]),0),cnt=Object.values(ord).reduce((a,b)=>a+b,0),okb=tot<=S.money&&cnt<=left;
+a.innerHTML=hdr()+`<div class="card"><h2>📦 오늘의 발주</h2><div class="mut">${S.fx.rain?'☔ 오늘은 비 예보! 우산이 잘 팔려요. ':''}${S.fx.sale?'🏷️ 도매상 특가: 발주가 −30%! ':''}${S.day==1?'먼저 오늘 팔 상품을 주문해요.':'창고 '+whUse()+'/'+cap()}</div>${P.map(p=>{const lock=p.st>S.star,q=ord[p.id]||0;return`<div class="row"><span class="n">${p.e} ${p.n} <span class="mut">${lock?'🔒 평판 ★'+p.st:fmt(cost(p))+' · 재고 '+(S.wh[p.id]||0)}</span></span><button ${q<1||lock?'disabled':''} onclick="oq('${p.id}',-1)" aria-label="${p.n} 빼기">−</button><b>${q}</b><button ${lock||q>=20?'disabled':''} onclick="oq('${p.id}',1)" aria-label="${p.n} 더하기">+</button></div>`}).join('')}<p>합계 <b>${fmt(tot)}</b> · 주문 ${cnt}개 (창고 여유 ${left}) ${tot>S.money?'<span class="bad">돈이 부족해요</span>':cnt>left?'<span class="bad">창고가 가득 차요</span>':''}</p><button onclick="rec()">추천 발주</button> <button class="pri" ${okb?'':'disabled'} onclick="ordOk()">발주 확정</button> <button onclick="ordSkip()">건너뛰기</button></div>`}
+function oq(id,d){ord[id]=Math.max(0,(ord[id]||0)+d);R()}
+function rec(){ord={};let l=cap()-whUse(),m=S.money;for(const p of unl()){const have=(S.wh[p.id]||0)+S.shelf.reduce((s,x)=>s+(x&&x.id===p.id?x.n:0),0);let q=Math.min(Math.max(0,8-have),l,Math.floor(m/cost(p)));if(q>0){ord[p.id]=q;l-=q;m-=q*cost(p)}}R()}
+function ordOk(){for(const[k,v]of Object.entries(ord)){S.money-=v*cost(PM[k]);S.wh[k]=(S.wh[k]||0)+v}ord={};S.stage='display';save();go('display')}
+function ordSkip(){ord={};S.stage='display';save();go('display')}
+// 진열
+function disV(a){const sh=S.shelf;a.innerHTML=hdr()+`<div class="grid two"><div class="card"><h2>🧺 매대</h2><div class="slots">${sh.map((s,i)=>{const p=s&&PM[s.id];return`<button class="slot" onclick="slotTap(${i})" aria-label="${p?p.n+' '+s.n+'개':'빈 칸'}"><span class="e">${p?p.e:'⬜'}</span>${p?p.n+' '+s.n+'/'+depth(p):'비어 있음'}</button>`}).join('')}</div><p class="mut">상품을 고른 뒤 칸을 누르면 가득 채워요. 같은 칸을 길게 비우려면 비우기를 누르세요.</p><button onclick="clr()">전부 비우기</button> <button onclick="autoS()">자동 진열</button></div><div class="card"><h2>📦 창고</h2><div class="slots">${P.filter(p=>p.st<=S.star).map(p=>`<button class="slot ${selP===p.id?'sel':''}" ${(S.wh[p.id]||0)?'':'disabled'} onclick="selP='${p.id}';R()"><span class="e">${p.e}</span>${p.n} ${(S.wh[p.id]||0)}</button>`).join('')}</div>${whUse()==0?'<p>재고가 없어요. 발주하러 갈까요?</p><button onclick="S.stage=\'order\';go(\'order\')">발주로 돌아가기</button>':''}<p><button class="pri" ${sh.some(s=>s&&s.n>0)?'':'disabled'} onclick="start()">영업 시작</button></p>${sh.some(s=>s&&s.n>0)?'':'<p class="mut">진열된 상품이 없어요.</p>'}</div></div>`}
+function slotTap(i){const s=S.shelf[i];if(s&&s.n>0&&(!selP||selP===s.id)&&!selP){S.wh[s.id]=(S.wh[s.id]||0)+s.n;S.shelf[i]=null;return R()}if(!selP)return toast('먼저 창고에서 상품을 골라요');if(s&&s.id!==selP&&s.n>0)return toast('한 칸에는 한 종류만 둘 수 있어요');const p=PM[selP],cur=s&&s.id===selP?s.n:0,m=Math.min(S.wh[selP]||0,depth(p)-cur);if(m<=0)return toast('더 올릴 수 없어요');S.wh[selP]-=m;S.shelf[i]={id:selP,n:cur+m};if(!S.wh[selP])selP=null;R()}
+function clr(){S.shelf.forEach((s,i)=>{if(s)S.wh[s.id]=(S.wh[s.id]||0)+s.n;S.shelf[i]=null});R()}
+function autoS(){clr();const l=unl().filter(p=>(S.wh[p.id]||0)>0).sort((a,b)=>S.wh[b.id]-S.wh[a.id]);S.shelf.forEach((s,i)=>{const p=l.shift();if(p){const m=Math.min(S.wh[p.id],depth(p));S.wh[p.id]-=m;S.shelf[i]={id:p.id,n:m}}});R()}
+// 영업
+function start(){save();G={t:0,ph:0,q:[],sel:null,rev:0,tip:0,cost:0,ok:0,miss:0,rp:0,lost:0,stories:[],nx:2,pause:false,sold:{},id:1,delay:0,evAt:rnd(110,250),last:Date.now()};G.iv=setInterval(tick,100);view='svc';R()}
+function phase(t){return t<100?0:t<160?1:t<260?2:3}
+function tick(){const now=Date.now(),dt=Math.min(.5,(now-G.last)/1000);G.last=now;if(G.pause||document.hidden)return;G.t+=dt;const ph=phase(G.t);if(ph!==G.ph){G.ph=ph;toast('🚇 '+PHN[ph]+' 시작!');document.body.dataset.ph=ph}
+if(!G.evDone&&S.day>1&&G.t>G.evAt){G.evDone=1;G.delay=15;toast('🚇 열차 지연! 손님이 몰려와요')}
+G.nx-=dt*(G.delay>0?2:1);if(G.delay>0)G.delay-=dt;if(G.nx<=0){arrive();G.nx=Math.max(2,SB[ph]*(S.day==1?1.5:S.day==2?1.25:1)*(.7+Math.random()*.6)*(1-.03*(S.star-1))*(1-.05*lv('sign')))}
+let ch=false;for(const c of G.q.slice()){c.pat-=dt/(1/(1-.1*lv('scan')))*(1);if(c.pat<=0){leave(c,true);ch=true}}
+document.querySelectorAll('[data-q]').forEach(e=>{const c=G.q.find(x=>x.id==e.dataset.q);if(c){const r=Math.max(0,c.pat/c.max);e.style.width=r*100+'%';e.style.background=r>.5?'var(--ok)':r>.25?'var(--gold)':'var(--bad)'}});
+const tm=$('#clk');if(tm){const mn=390+G.t/360*1050;tm.textContent=String(Math.floor(mn/60)%24).padStart(2,'0')+':'+String(Math.floor(mn%60)).padStart(2,'0')}const b=$('#tbar');if(b)b.style.width=G.t/3.6+'%';if(ch)R();if(G.t>=360)endDay()}
+function pick(w){let t=w.reduce((a,b)=>a+b,0),r=Math.random()*t;for(let i=0;i<w.length;i++){r-=w[i];if(r<0)return i}return 0}
+function arrive(){if(G.q.length>=4)return;const ph=G.ph,ci=pick(C.map(c=>c.w[ph])),c=C[ci],pool=unl().map(p=>S.fx.rain&&p.id==='umb'?p.d[ph]*3:p.id==='umb'?0:p.d[ph]);let items=[],line='';const sc=ST.filter(s=>s[0]===ph);if(G.stories.length<3&&Math.random()<.12){const s=sc[rnd(0,sc.length-1)];items=s[2].slice();line=s[1]}else{const k=rnd(c.k[0],c.k[1]),w=pool.slice();while(items.length<k&&w.some(x=>x>0)){const i=pick(w);items.push(unl()[i].id);w[i]=0}}
+const sp={};for(const[k,v]of Object.entries(c.sp))if(Math.random()<v)sp[k]=1;if(sp.way)sp.ans=rnd(1,3);const max=c.pt*(S.day==1?1.5:1);G.q.push({id:G.id++,c,items,line,sp,done:{},bag:[],pat:max,max});if(!G.sel||!G.q.find(x=>x.id===G.sel))G.sel=G.q[0].id;R()}
+function cur(){return G&&G.q.find(c=>c.id===G.sel)}
+function leave(c,miss){G.q=G.q.filter(x=>x!==c);if(G.sel===c.id)G.sel=G.q[0]?G.q[0].id:null;if(miss){G.miss++;if(S.day>1&&G.lost<8){G.lost++;G.rp--;S.rp=Math.max(TH[S.star-1],S.rp-1)}toast(c.c.e+' 😮‍💨 놓쳤어요… 다음엔 꼭!')}}
+function shelfN(id){return S.shelf.reduce((s,x)=>s+(x&&x.id===id?x.n:0),0)}
+function toggle(id){const c=cur();if(!c)return;const i=c.bag.indexOf(id);if(i>=0)c.bag.splice(i,1);else if(shelfN(id)>0)c.bag.push(id);else return toast('품절이에요. 보충하거나 양해를 구해요');R()}
+function refill(id){const i=S.shelf.findIndex(s=>s&&s.id===id),p=PM[id];if(!(S.wh[id]>0))return;const c=cur();if(c)c.pat-=1;if(i<0){const e=S.shelf.findIndex(s=>!s||s.n==0);if(e<0)return toast('빈 칸이 없어요');S.shelf[e]={id,n:0}}const j=S.shelf.findIndex(s=>s&&s.id===id),m=Math.min(S.wh[id],depth(p)-S.shelf[j].n);S.wh[id]-=m;S.shelf[j].n+=m;R()}
+function excuse(id){const c=cur();if(!c)return;c.items=c.items.filter(x=>x!==id);c.bag=c.bag.filter(x=>x!==id);if(!c.items.length){leave(c,false);toast('빈손으로 돌아갔어요. 재고를 채워 두세요!')}R()}
+function sp(k,v){const c=cur();if(!c)return;if(k==='way'){if(v===c.sp.ans)c.done.way=1;else{c.pat-=2;toast('앗, 그쪽 출구가 아니에요!')}}else c.done[k]=1;R()}
+function ready(c){return c.items.length>0&&c.bag.length===c.items.length&&c.items.every(i=>c.bag.includes(i))&&(!c.sp.bag||c.done.bag)&&(!c.sp.rec||c.done.rec)&&(!c.sp.way||c.done.way)}
+function pay(){const c=cur();if(!c||!ready(c))return;const sum=c.bag.reduce((s,i)=>s+PM[i].pr,0),fast=c.pat/c.max>=.5,tip=fast?Math.round(sum*c.c.tip/100)*100:0;c.bag.forEach(i=>{const s=S.shelf.find(x=>x&&x.id===i&&x.n>0);s.n--;G.cost+=cost(PM[i]);G.sold[i]=(G.sold[i]||0)+1});S.money=Math.min(9999999,S.money+sum+tip);G.rev+=sum;G.tip+=tip;G.ok++;const g=fast?2:1;G.rp+=g;S.rp+=g;if(c.line&&!G.stories.includes(c.line))G.stories.push(c.line);while(S.star<5&&S.rp>=TH[S.star])S.star++;toast((fast?'⚡ 빠른 응대! ':'')+'+'+fmt(sum+tip));leave(c,false);R()}
+function svcV(a){if(!G)return;const c=cur(),mn=390+G.t/360*1050;a.innerHTML=hdr()+`<div class="card"><b>🕒 <span id="clk">${String(Math.floor(mn/60)%24).padStart(2,'0')}:${String(Math.floor(mn%60)).padStart(2,'0')}</span> · ${PHN[G.ph]}</b> · 매출 ${fmt(G.rev+G.tip)} <button onclick="pz()">${G.pause?'▶ 계속':'⏸ 일시정지'}</button><div class="bar" style="margin-top:6px"><i id="tbar" style="width:${G.t/3.6}%"></i></div></div>
+<div class="grid two"><div><div class="card"><h2>줄 (${G.q.length}/4)</h2><div class="q">${G.q.map((x,i)=>`<button class="cust ${x.id===G.sel?'on':''}" onclick="G.sel=${x.id};R()" aria-label="${i+1}번 손님 ${x.c.n}">${x.c.e} ${x.c.n}${x.line?' ⭐':''}<div class="g"><i data-q="${x.id}" style="width:${x.pat/x.max*100}%"></i></div></button>`).join('')||'<span class="mut">손님을 기다리는 중…</span>'}</div></div>
+<div class="card"><h2>응대</h2>${c?`${c.line?`<p>⭐ “${c.line}”</p>`:''}<div>${c.items.map(i=>{const p=PM[i],n=shelfN(i);return`<span class="chip"><button class="${c.bag.includes(i)?'chip in':'chip'}" onclick="toggle('${i}')">${p.e} ${p.n}${n?'':' (품절)'}</button>${n?'':(S.wh[i]>0?`<button onclick="refill('${i}')">보충</button>`:`<button onclick="excuse('${i}')">양해 구하기</button>`)}</span>`}).join('')}</div>
+<div>${c.sp.bag?`<button ${c.done.bag?'disabled':''} onclick="sp('bag')">🛍️ 봉투 ${c.done.bag?'✓':''}</button>`:''} ${c.sp.rec?`<button ${c.done.rec?'disabled':''} onclick="sp('rec')">🧾 영수증 ${c.done.rec?'✓':''}</button>`:''} ${c.sp.way?`<span>“${c.sp.ans}번 출구가 어디죠?” ${c.done.way?'✓':[1,2,3].map(n=>`<button onclick="sp('way',${n})">출구 ${n}</button>`).join(' ')}</span>`:''}</div>
+<p><button class="pri" ${ready(c)?'':'disabled'} onclick="pay()">계산 ${fmt(c.bag.reduce((s,i)=>s+PM[i].pr,0))}</button></p>`:'<p class="mut">응대할 손님이 없어요.</p>'}</div></div>
+<div class="card"><h2>매대</h2><div class="slots">${S.shelf.map(s=>{const p=s&&PM[s.id];return`<button class="slot" ${p&&s.n>0?`onclick="toggle('${s.id}')"`:p&&S.wh[s.id]>0?`onclick="refill('${s.id}')"`:'disabled'}><span class="e">${p?p.e:'⬜'}</span>${p?p.n+' '+s.n:'비어 있음'}${p&&!s.n&&S.wh[s.id]>0?'<br>보충':''}</button>`}).join('')}</div></div></div>`}
+function pz(){G.pause=!G.pause;R()}
+function endDay(){clearInterval(G.iv);const g=G,unitSold=Object.entries(g.sold).sort((a,b)=>b[1]-a[1])[0],oldStar=S.star;S.hist.push({day:S.day,profit:g.rev+g.tip-g.cost});S.hist=S.hist.slice(-14);S.stories=g.stories.slice(-6);S.stage='result';S.res={rev:g.rev,tip:g.tip,cost:g.cost,ok:g.ok,miss:g.miss,rp:g.rp,top:unitSold?PM[unitSold[0]].e+' '+PM[unitSold[0]].n:'-',st:g.stories};S.shelf.forEach((s,i)=>{if(s&&s.n>0&&whUse()+s.n<=cap()){S.wh[s.id]=(S.wh[s.id]||0)+s.n;S.shelf[i]={id:s.id,n:0}}});G=null;save();view='result';R()}
+function resV(a){const r=S.res||{rev:0,tip:0,cost:0,ok:0,miss:0,rp:0,top:'-',st:[]};const star=S.star>(S.res&&S.res.star0||S.star)?'':'';a.innerHTML=hdr()+`<div class="card"><h2>🧾 ${S.day}일차 마감 정산</h2><div class="row"><span class="n">매출</span><b>${fmt(r.rev)}</b></div><div class="row"><span class="n">팁</span><b>${fmt(r.tip)}</b></div><div class="row"><span class="n">판매 원가</span><b>−${fmt(r.cost)}</b></div><div class="row"><span class="n"><b>순이익</b></span><b class="${r.rev+r.tip-r.cost>=0?'ok':'bad'}">${fmt(r.rev+r.tip-r.cost)}</b></div><div class="row"><span class="n">응대 성공 / 놓침</span><b>${r.ok} / ${r.miss}</b></div><div class="row"><span class="n">평판 변화</span><b>${r.rp>=0?'+':''}${r.rp} (현재 ${'⭐'.repeat(S.star)})</b></div><div class="row"><span class="n">인기 상품</span><b>${r.top}</b></div><h2 style="margin-top:12px">오늘의 사연</h2>${r.st.length?r.st.map(x=>`<p>⭐ “${x}”</p>`).join(''):'<p class="mut">오늘은 조용한 하루였어요.</p>'}<p><button onclick="go('up')">업그레이드 보기</button> <button class="pri" onclick="nextDay()">다음 날로</button></p></div>`}
+function nextDay(){S.day++;S.fx={rain:S.star>=3&&Math.random()<.25,sale:Math.random()<.15};S.stage='order';if(S.money<=0&&whUse()+S.shelf.reduce((s,x)=>s+(x?x.n:0),0)===0){S.money+=10000;toast('본사 지원금 10,000원이 도착했어요!')}save();ord={};go('order')}
+function upV(a){a.innerHTML=hdr()+`<div class="card"><h2>🛠️ 매점 업그레이드</h2>${UP.map(u=>{const l=lv(u.id),mx=l>=u.max,need=u.s[l],ok=!mx&&S.money>=u.pr[l]&&S.star>=need;return`<div class="row"><span class="n"><b>${u.n}</b> Lv${l}/${u.max}<br><span class="mut">${u.ef} · ${mx?'최대 레벨':fmt(u.pr[l])+' · 평판 ⭐'+need+(S.star<need?' 필요':'')}</span></span><button ${ok?'':'disabled'} onclick="buy('${u.id}')">구매</button></div>`}).join('')}<p><button onclick="go(S.stage==='result'?'result':'order')">돌아가기</button></p></div>`}
+function buy(id){const u=UP.find(x=>x.id===id),l=lv(id);if(l>=u.max||S.money<u.pr[l]||S.star<u.s[l])return;S.money-=u.pr[l];S.up[id]=l+1;while(S.shelf.length<slots())S.shelf.push(null);save();toast('업그레이드 완료!');R()}
+function setV(a){a.innerHTML=(S?hdr():'')+`<div class="card"><h2>설정 / 데이터</h2>${S?`<p><button onclick="S.set.big^=1;save();R()">글자 크게: ${S.set.big?'켬':'끔'}</button> <button onclick="S.set.rm^=1;save();R()">움직임 줄이기: ${S.set.rm?'켬':'끔'}</button></p><p class="mut">내보내기 (복사해서 보관하세요)</p><textarea id="ex" readonly>${JSON.stringify(S)}</textarea>`:''}<p class="mut">불러오기 (붙여넣기)</p><textarea id="im"></textarea><p><button onclick="imp()">불러오기</button> <button onclick="rst()">처음부터 다시 시작</button> <button onclick="go(S?S.stage:'title')">돌아가기</button> <button onclick="go('title')">타이틀로</button></p></div>`}
+function imp(){const s=(()=>{try{return clean(JSON.parse($('#im').value))}catch(e){return null}})();if(!s)return toast('올바른 데이터가 아니에요');if(G){clearInterval(G.iv);G=null}S=s;save();toast('불러왔어요');go(S.stage)}
+function rst(){if(confirm('정말 삭제할까요?')&&confirm('모든 진행이 사라져요. 삭제하기?')){if(G){clearInterval(G.iv);G=null}try{localStorage.removeItem(K);localStorage.removeItem(K+'.bak')}catch(e){}S=null;view='title';R()}}
+document.addEventListener('keydown',e=>{if(view!=='svc'||!G||/TEXTAREA|INPUT/.test(e.target.tagName))return;if(e.key==='Enter'&&e.target.tagName!=='BUTTON'){pay()}else if(e.key===' '&&e.target.tagName!=='BUTTON'){e.preventDefault();pz()}else if(/^[1-4]$/.test(e.key)&&G.q[e.key-1]){G.sel=G.q[e.key-1].id;R()}});
+document.addEventListener('visibilitychange',()=>{if(G&&document.hidden)G.last=Date.now()});
+S=load();R();
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script></body></html>
